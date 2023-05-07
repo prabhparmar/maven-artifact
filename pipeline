@@ -1,0 +1,30 @@
+pipeline {
+    agent alave
+    tools{
+        maven 'maven3'
+    }
+    stages {
+        stage ('git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/bcreddydevops/chinna-app.git'
+            }
+        }
+        stage ('maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage ('sonar') {
+            steps {
+                withSonarQubeEnv(installationName:'sonarqube-8' , credentialsId: 'jenkins-sonar-tokken') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+        stage ('nexus') {
+            steps{
+                nexusArtifactUploader artifacts: [[artifactId: 'hiring', classifier: '', file: 'target/hiring.war', type: 'war']], credentialsId: 'nexus-credentials', groupId: 'in.javahome', nexusUrl: '18.221.38.71:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'my-app', version: '0.1'
+            }
+        }
+    }
+}
